@@ -1,32 +1,38 @@
 // --- CONFIG & STATE ---
+// --- ZONE 1: CONFIG & STATE ---
 const VIDEO_DATA = {
-    '1fqsNZ9HGU8': '小lin说：RMB tendency',
-    'Q73s8v_d46M': '小lin说：Exchange rate going up',
-    'Lb60mjM5B1U': '小lin说：Recap of last 6 years',
-    'HeVuAKDtWX8': '小lin说：Iran war',
-    'vP45wBOQLS8': '小lin说：SVB bank',
-    'hhtMlRZLJ0g': '小lin说：Sports Betting',
-    'ERK34RQq9YU': '小lin说：Ads',
-    'Euc0HS-0XUs': '小lin说：Marketing Tactics',
-    'AJLe1AEgz5M': '小lin说：Vietnam Fraud',
-    'ssssR1hxiTw': '小lin说：Middle East Oil',
-    'zsOYK-sb3Qo': '二爷故事：Xi and Bo Xilai',
-    'aWrqBWs_HJ8': '大问题dialectic：Chinese vs Western Philosophy',
-    'bQ-tobjv92k': '有点在李：Concerts prices',
-    'tPtHJ2FvtdM': '有点在李：SpaceX IPO',
-    'tHv-FSgtcnc': '有点在李：Palantir',
-    'uzx5xWNOSws': '有点在李：Claude',
-    '8eAJ9PDgUyI': '有点在李：Fight for AI Hegemony',
-    'yP3lKQF-nb4': '有点在李：Economics of Museums',
-    'bili:BV1LYoGBBEsF': 'Self-care: Why do we feel we are not enough',
-    '__Borrador_UNAM_en_Chino': 'Historia de la UNAM',
-    'documents/HSK41002.pdf': 'HSK4 test 2',
+    '1fqsNZ9HGU8': { title: '小lin说：RMB tendency', category: 'Economics' },
+    'Q73s8v_d46M': { title: '小lin说：Exchange rate going up', category: 'Economics' },
+    'Lb60mjM5B1U': { title: '小lin说：Recap of last 6 years', category: 'Economics' },
+    'HeVuAKDtWX8': { title: '小lin说：Iran war', category: 'Economics' },
+    'vP45wBOQLS8': { title: '小lin说：SVB bank', category: 'Economics' },
+    'hhtMlRZLJ0g': { title: '小lin说：Sports Betting', category: 'Economics' },
+    'ERK34RQq9YU': { title: '小lin说：Ads', category: 'Economics' },
+    'Euc0HS-0XUs': { title: '小lin说：Marketing Tactics', category: 'Economics' },
+    'AJLe1AEgz5M': { title: '小lin说：Vietnam Fraud', category: 'Economics' },
+    'ssssR1hxiTw': { title: '小lin说：Middle East Oil', category: 'Economics' },
+    'yP3lKQF-nb4': { title: '小lin说：Economics of Museums', category: 'Economics' },
+    'zsOYK-sb3Qo': { title: '二爷故事：Xi and Bo Xilai', category: 'Politics' },
+    'aWrqBWs_HJ8': { title: '大问题dialectic：Chinese vs Western Philosophy', category: 'Philosophy' },
+    'bQ-tobjv92k': { title: '有点在李：Concerts prices', category: 'Tech' },
+    'tPtHJ2FvtdM': { title: '有点在李：SpaceX IPO', category: 'Tech' },
+    'tHv-FSgtcnc': { title: '有点在李：Palantir', category: 'Tech' },
+    'uzx5xWNOSws': { title: '有点在李：Claude', category: 'Tech' },
+    '8eAJ9PDgUyI': { title: '有点在李：Fight for AI Hegemony', category: 'Tech' },
+    'bili:BV1LYoGBBEsF': { title: 'Self-care: Why do we feel we are not enough', category: 'General' },
+    '__Borrador_UNAM_en_Chino': { title: 'Historia de la UNAM', category: 'General' },
+    'documents/HSK41002.pdf': { title: 'HSK4 test 2', category: 'HSK' }
 };
 
-let currentVideoId = '1fqsNZ9HGU8';
-let player;
-let captions = [];
-let lastActiveIndex = -1;
+let appState = {
+    currentVideoId: '1fqsNZ9HGU8',
+    currentCategory: 'All',
+    isPinyinVisible: true,
+    isSidebarCollapsed: false,
+    player: null,
+    captions: [],
+    lastActiveIndex: -1
+};
 
 // --- SPEECH MANAGER ---
 const speechManager = {
@@ -52,10 +58,10 @@ async function init() {
 
 function renderVideoList() {
     const list = document.getElementById('video-list');
-    list.innerHTML = Object.entries(VIDEO_DATA).map(([id, title]) => `
-        <button class="nav-item ${id === currentVideoId ? 'active' : ''}"
+    list.innerHTML = Object.entries(VIDEO_DATA).map(([id, video_info]) => `
+        <button class="nav-item ${id === appState.currentVideoId ? 'active' : ''}"
                 onclick="switchVideo('${id}')">
-            ${title}
+            ${video_info.title}
         </button>
     `).join('');
 }
@@ -64,7 +70,7 @@ async function loadCaptions() {
     try {
         // Construct the path: captions/videoId.json
         // Note: We encodeURIComponent in case your IDs have special characters
-        const filePath = `captions/${encodeURIComponent(currentVideoId)}.json`;
+        const filePath = `captions/${encodeURIComponent(appState.currentVideoId)}.json`;
 
         const response = await fetch(filePath);
 
@@ -76,17 +82,17 @@ async function loadCaptions() {
 
         // Since the file is now specific to one video,
         // the JSON can just be the array itself
-        captions = Array.isArray(data) ? data : (data[currentVideoId] || []);
+        appState.captions = Array.isArray(data) ? data : (data[appState.currentVideoId] || []);
 
-        if (captions.length === 0) {
-            console.warn(`No transcripts found for ID: ${currentVideoId}`);
+        if (appState.captions.length === 0) {
+            console.warn(`No transcripts found for ID: ${appState.currentVideoId}`);
         }
 
         renderTranscript();
     } catch (err) {
         console.error("Error loading transcript JSON:", err);
         // Clear transcript if file is missing to avoid showing old data
-        captions = [];
+        appState.captions = [];
         renderTranscript();
     }
 }
@@ -94,11 +100,11 @@ async function loadCaptions() {
 function renderTranscript() {
     const container = document.getElementById('transcript');
     // Check if we are in a mode that doesn't support seeking (BiliBili or Transcript-only)[cite: 3]
-    const isBili = currentVideoId.startsWith('bili:');
-    const isOnlyTranscript = currentVideoId.startsWith('__');
+    const isBili = appState.currentVideoId.startsWith('bili:');
+    const isOnlyTranscript = appState.currentVideoId.startsWith('__');
     const useTTS = isBili || isOnlyTranscript;
 
-    container.innerHTML = captions.map((cap, i) => {
+    container.innerHTML = appState.captions.map((cap, i) => {
         // Escape single quotes for the speech synthesis string[cite: 2]
         const cleanText = cap.text.replace(/'/g, "\\'");
 
@@ -129,10 +135,10 @@ function onYouTubeIframeAPIReady() {
     // Check if the placeholder div exists in the DOM before trying to attach[cite: 2]
     if (!document.getElementById('player')) return;
 
-    player = new YT.Player('player', {
+    appState.player = new YT.Player('player', {
         height: '100%',
         width: '100%',
-        videoId: currentVideoId,
+        videoId: appState.currentVideoId,
         playerVars: {
             'autoplay': 0,
             'controls': 1,
@@ -152,25 +158,25 @@ function onYouTubeIframeAPIReady() {
 }
 
 function syncLoop() {
-    if (player && player.getCurrentTime && captions.length > 0) {
-        const time = player.getCurrentTime();
-        const index = captions.findIndex((c, i) => time >= c.start && time < (captions[i+1]?.start || Infinity));
+    if (appState.player && appState.player.getCurrentTime && appState.captions.length > 0) {
+        const time = appState.player.getCurrentTime();
+        const index = appState.captions.findIndex((c, i) => time >= c.start && time < (appState.captions[i+1]?.start || Infinity));
 
-        if (index !== lastActiveIndex) {
+        if (index !== appState.lastActiveIndex) {
             document.querySelectorAll('.caption-line').forEach(el => el.classList.remove('active'));
             const activeEl = document.getElementById(`cap-${index}`);
             if (activeEl) {
                 activeEl.classList.add('active');
                 activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
-            lastActiveIndex = index;
+            appState.lastActiveIndex = index;
         }
     }
     requestAnimationFrame(syncLoop);
 }
 
 async function switchVideo(id) {
-    currentVideoId = id;
+    appState.currentVideoId = id;
     const isPDF = id.endsWith('.pdf');
     const isOnlyTranscript = id.startsWith('__');
     const isBili = id.startsWith('bili:'); // New Detection
@@ -211,7 +217,7 @@ async function switchVideo(id) {
                 <div id="caption-box"><div id="transcript"></div></div>
             </div>`;
 
-        if (player && player.destroy) player.destroy(); // Clean up YT
+        if (appState.player && appState.player.destroy) appState.player.destroy(); // Clean up YT
         await loadCaptions();
     } else {
         // 2. IMPORTANT: Re-inject the video/transcript skeleton[cite: 1]
@@ -221,8 +227,8 @@ async function switchVideo(id) {
 
         // 3. Force re-initialization of the Player
         // If the player exists, destroy the old instance to avoid memory leaks
-        if (player && typeof player.destroy === 'function') {
-            player.destroy();
+        if (appState.player && typeof appState.player.destroy === 'function') {
+            appState.player.destroy();
         }
 
         // Re-run the API constructor
@@ -230,7 +236,7 @@ async function switchVideo(id) {
         await loadCaptions();
     }
 
-    lastActiveIndex = -1;
+    appState.lastActiveIndex = -1;
     renderVideoList(); // Update active sidebar button
     loadNotes(); // Load notes for this specific id
 }
@@ -248,7 +254,7 @@ function saveNotes() {
         title: p.querySelector('.parent-input').innerText, // Changed to innerText[cite: 2]
         subNotes: Array.from(p.querySelectorAll('.child-input')).map(c => c.innerText) // Changed to innerText[cite: 2]
     }));
-    master[currentVideoId] = data;
+    master[appState.currentVideoId] = data;
     localStorage.setItem('yt_notebook_master', JSON.stringify(master));
 }
 
@@ -256,7 +262,7 @@ function loadNotes() {
     const board = document.getElementById('notes-board');
     board.innerHTML = '';
     const master = JSON.parse(localStorage.getItem('yt_notebook_master')) || {};
-    const currentData = master[currentVideoId] || [];
+    const currentData = master[appState.currentVideoId] || [];
 
     currentData.forEach(item => {
         const parent = createParentUI(item.title);

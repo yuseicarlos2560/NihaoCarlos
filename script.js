@@ -58,11 +58,27 @@ async function init() {
 
 function renderVideoList() {
     const list = document.getElementById('video-list');
-    list.innerHTML = Object.entries(VIDEO_DATA).map(([id, video_info]) => `
-        <button class="nav-item ${id === appState.currentVideoId ? 'active' : ''}"
-                onclick="switchVideo('${id}')">
-            ${video_info.title}
-        </button>
+
+    // 1. Group data by category
+    const groupedData = Object.entries(VIDEO_DATA).reduce((acc, [id, info]) => {
+        if (!acc[info.category]) acc[info.category] = [];
+        acc[info.category].push({ id, ...info });
+        return acc;
+    }, {});
+
+    // 2. Build the HTML with <details> for each category
+    list.innerHTML = Object.entries(groupedData).map(([category, videos]) => `
+        <details class="category-section" open>
+            <summary class="category-header">${category}</summary>
+            <div class="category-content">
+                ${videos.map(video => `
+                    <button class="nav-item ${video.id === appState.currentVideoId ? 'active' : ''}"
+                            onclick="switchVideo('${video.id}')">
+                        ${video.title}
+                    </button>
+                `).join('')}
+            </div>
+        </details>
     `).join('');
 }
 
@@ -341,10 +357,69 @@ function addParent() {
     saveNotes();
 }
 
+function switchMode(mode) {
+    const views = {
+        'sessions': document.getElementById('video-list'),
+        'flashcards': document.getElementById('flashcard-list'),
+        'stats': document.getElementById('stats-view')
+    };
+    const searchInput = document.getElementById('session-search');
+
+    // 1. Toggle visibility of all sections
+    Object.keys(views).forEach(key => {
+        views[key].style.display = (key === mode) ? 'block' : 'none';
+    });
+
+    // 2. Hide search input if we are in stats
+    searchInput.style.display = (mode === 'sessions') ? 'block' : 'none';
+
+    // 3. Update button active states
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.innerText.toLowerCase().includes(mode.substring(0, 4)));
+    });
+
+    // 4. If switching to stats, trigger the bar animation
+    if (mode === 'stats') {
+        updateStatsGraphs();
+    }
+}
+
+function updateStatsGraphs() {
+    // Example logic: calculate percentages based on a total
+    // Replace these with your actual data variables
+    const data = {
+        new: parseInt(document.getElementById('stat-new').innerText) || 5,
+        learning: parseInt(document.getElementById('stat-learning').innerText) || 12,
+        mastered: parseInt(document.getElementById('stat-mastered').innerText) || 25
+    };
+
+    const total = data.new + data.learning + data.mastered || 1;
+
+    document.getElementById('bar-new').style.width = `${(data.new / total) * 100}%`;
+    document.getElementById('bar-learning').style.width = `${(data.learning / total) * 100}%`;
+    document.getElementById('bar-mastered').style.width = `${(data.mastered / total) * 100}%`;
+}
+
 function filterSessions() {
     const query = document.getElementById('session-search').value.toLowerCase();
-    document.querySelectorAll('.nav-item').forEach(btn => {
-        btn.style.display = btn.innerText.toLowerCase().includes(query) ? 'block' : 'none';
+
+    document.querySelectorAll('.category-section').forEach(section => {
+        let hasMatch = false;
+        const items = section.querySelectorAll('.nav-item');
+
+        items.forEach(item => {
+            const matches = item.innerText.toLowerCase().includes(query);
+            item.style.display = matches ? 'block' : 'none';
+            if (matches) hasMatch = true;
+        });
+
+        // Show category only if it contains a matching item
+        section.style.display = hasMatch ? 'block' : 'none';
+
+        // Optionally auto-expand sections during search
+        if (query.length > 0 && hasMatch) {
+            section.open = true;
+        }
     });
 }
 
@@ -450,16 +525,14 @@ const StudyManager = {
 
     handleGrade: function(isMastered) {
         const card = this.deck[this.currentIndex];
-
-        // Update mastery level in the independent storage[cite: 3]
         this.updateGlobalMastery(card.id, isMastered ? 2 : 1);
 
         this.currentIndex++;
         if (this.currentIndex < this.deck.length) {
             this.renderCard();
         } else {
-            alert("Global review complete!");
-            this.closeModal();
+            alert("Review complete!");
+            this.closeView();
         }
     },
 
@@ -492,29 +565,30 @@ const StudyManager = {
     },
 
     deleteCurrentCard: function() {
-        if (!confirm("Remove this card permanently from the Global Deck?")) return;
-
+        if (!confirm("Delete permanently?")) return;
         const cardId = this.deck[this.currentIndex].id;
         let globalCards = JSON.parse(localStorage.getItem('flashcards_master')) || [];
-
-        // Remove from independent storage[cite: 2]
         globalCards = globalCards.filter(c => c.id !== cardId);
         localStorage.setItem('flashcards_master', JSON.stringify(globalCards));
-
         this.deck.splice(this.currentIndex, 1);
+
         if (this.currentIndex >= this.deck.length) {
-            this.closeModal();
+            this.closeView();
         } else {
             this.renderCard();
         }
     },
 
     showModal: function() {
-        document.getElementById('flashcard-modal').style.display = 'flex';
+        // Hide setup, show card UI
+        document.getElementById('study-setup').style.display = 'none';
+        document.getElementById('study-ui').style.display = 'block';
     },
 
-    closeModal: function() {
-        document.getElementById('flashcard-modal').style.display = 'none';
+    closeView: function() {
+        document.getElementById('study-setup').style.display = 'block';
+        document.getElementById('study-ui').style.display = 'none';
+        this.updateStats(); // Refresh the stats bars
     },
 
     updateStats: function() {

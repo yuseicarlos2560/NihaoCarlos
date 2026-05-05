@@ -14,11 +14,78 @@
   <aside class="sidebar">
     <div class="sidebar-header">
       <h1>Nihao Carlos</h1>
-      <input type="text" id="session-search" placeholder="Search sessions..." oninput="filterSessions()">
+      <!-- New Mode Switcher -->
+      <div class="mode-switcher">
+        <button class="mode-btn active" onclick="switchMode('sessions')">Sessions</button>
+        <button class="mode-btn" onclick="switchMode('flashcards')">Flash Cards</button>
+        <button class="mode-btn" onclick="switchMode('stats')">Stats</button>
+      </div>
+      <input type="text" id="session-search" placeholder="Search..." oninput="filterSessions()">
     </div>
+
     <nav class="video-switcher" id="video-list">
-      <!-- Buttons injected by JS -->
+      <!-- Session buttons injected here -->
     </nav>
+
+    <!-- New container for Flash Card content -->
+    <div id="flashcard-list" style="display: none; padding: 15px;">
+      <!-- Setup View: Only visible when not studying -->
+      <div id="study-setup" style="margin-bottom: 20px;">
+        <select id="review-mode-select" class="mode-select">
+          <option value="random">Random Mode</option>
+          <option value="new">New Cards</option>
+          <option value="learning">Learning</option>
+          <option value="spaced">Spaced Repetition</option>
+        </select>
+        <button class="start-btn" onclick="StudyManager.startGlobalReview()">Start Review</button>
+      </div>
+
+      <!-- Study View: Hidden until Start is clicked -->
+      <div id="study-ui" style="display:none;">
+        <div class="sidebar-card-header">
+          <span id="card-progress">0/0</span>
+          <button onclick="StudyManager.deleteCurrentCard()" class="btn-icon">🗑️</button>
+        </div>
+
+        <div class="card" onclick="StudyManager.flip()">
+          <div class="card-inner">
+            <div class="card-front" id="card-front-text"></div>
+            <div class="card-back">
+              <div id="card-back-text" contenteditable="true" onclick="event.stopPropagation()" onblur="StudyManager.saveEdit(this)"></div>
+              <small class="edit-hint">(Click to edit)</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="study-controls">
+          <button class="btn-grade btn-fail" onclick="StudyManager.handleGrade(false)">Again</button>
+          <button class="btn-grade btn-pass" onclick="StudyManager.handleGrade(true)">Got it</button>
+          <button class="btn-grade" onclick="StudyManager.closeView()">Exit</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="stats-view" style="display: none; padding: 20px;">
+      <div class="graph-container">
+        <div class="stat-group">
+          <label>New</label>
+          <div class="progress-bar"><div id="bar-new" class="fill new" style="width: 0%"></div></div>
+          <span id="stat-new">0</span>
+        </div>
+
+        <div class="stat-group">
+          <label>Learning</label>
+          <div class="progress-bar"><div id="bar-learning" class="fill learning" style="width: 0%"></div></div>
+          <span id="stat-learning">0</span>
+        </div>
+
+        <div class="stat-group">
+          <label>Mastered</label>
+          <div class="progress-bar"><div id="bar-mastered" class="fill mastered" style="width: 0%"></div></div>
+          <span id="stat-mastered">0</span>
+        </div>
+      </div>
+    </div>
   </aside>
 
   <!-- Main Content Area -->
@@ -40,58 +107,11 @@
     <section class="notes-section">
       <div class="section-header">
         <h2>Knowledge Workspace</h2>
-        <div class="review-actions">
-          <select id="review-mode-select" class="mode-dropdown">
-            <option value="random">Random (All)</option>
-            <option value="learning">Learning (Again)</option>
-            <option value="new">New Words</option>
-            <option value="spaced">Spaced Repetition (3d+)</option>
-            <option value="confidence">Confidence (Mastered)</option>
-          </select>
-          <button class="btn-review" onclick="StudyManager.startGlobalReview()">Start Review</button>
-        </div>
         <button class="btn-primary" onclick="addParent()">+ New Concept</button>
-      </div>
-      <div class="stats-container">
-        <div class="stat-item">🆕 New: <span id="stat-new">0</span></div>
-        <div class="stat-item">🧠 Learning: <span id="stat-learning">0</span></div>
-        <div class="stat-item">✅ Mastered: <span id="stat-mastered">0</span></div>
       </div>
       <div id="notes-board"></div>
     </section>
   </main>
-</div>
-
-<div id="flashcard-modal" class="flashcard-modal">
-  <div class="modal-header" style="display:flex; gap: 20px; align-items:center;">
-    <div id="card-progress"></div>
-    <!-- Delete from Global Storage button -->
-    <button onclick="StudyManager.deleteCurrentCard()"
-            style="background:none; border:1px solid #ff4d4d; color:#ff4d4d; border-radius:5px; cursor:pointer;">
-      🗑️ Delete Card
-    </button>
-  </div>
-
-  <div class="card" onclick="StudyManager.flip()">
-    <div class="card-inner">
-      <div class="card-front" id="card-front-text"></div>
-      <div class="card-back">
-        <!-- Add onclick="event.stopPropagation()" here -->
-        <div id="card-back-text"
-             contenteditable="true"
-             onclick="event.stopPropagation()"
-             onblur="StudyManager.saveEdit(this)">
-        </div>
-        <small style="margin-top:20px; opacity:0.5;">(Click text to edit)</small>
-      </div>
-    </div>
-  </div>
-
-  <div class="study-controls">
-    <button class="btn-grade btn-fail" onclick="StudyManager.handleGrade(false)">Again</button>
-    <button class="btn-grade btn-pass" onclick="StudyManager.handleGrade(true)">Got it</button>
-    <button class="btn-grade" onclick="StudyManager.closeModal()">Exit</button>
-  </div>
 </div>
 
 <button class="stop-btn" onclick="speechManager.stop()">⏹ Stop Voice</button>

@@ -21,8 +21,77 @@ body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-main); 
 .sidebar-header h1 { font-size: 1.2rem; margin: 0 0 15px 0; color: var(--accent-purple); }
 #session-search { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-main); color: white; }
 
+.mode-switcher {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.mode-btn {
+    flex: 1;
+    padding: 8px;
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    border-radius: 4px;
+}
+
+.mode-btn.active {
+    background: var(--accent-purple);
+    color: white;
+    border-color: var(--accent-purple);
+}
+
 .video-switcher { flex: 1; overflow-y: auto; padding: 10px; }
-.nav-item { width: 100%; text-align: left; padding: 10px; margin-bottom: 5px; background: transparent; border: none; color: var(--text-main); border-radius: 6px; cursor: pointer; font-size: 0.9rem; border: 1px solid transparent; }
+
+/* Container for each group */
+.category-section {
+    margin-bottom: 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* The clickable header */
+.category-header {
+    padding: 10px 15px;
+    font-weight: bold;
+    font-size: 0.85rem;
+    color: var(--accent-purple);
+    cursor: pointer;
+    list-style: none; /* Removes default arrow in some browsers */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Custom arrow indicator */
+.category-header::before {
+    content: '▸';
+    margin-right: 8px;
+    display: inline-block;
+    transition: transform 0.2s;
+}
+
+.category-section[open] .category-header::before {
+    transform: rotate(90deg);
+}
+
+/* Indent buttons inside the category */
+.category-content {
+    padding-left: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.nav-item {
+    text-align: left;
+    padding: 8px 15px;
+    background: none;
+    border: none;
+    color: var(--text-main);
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
 .nav-item:hover { background: var(--bg-card); }
 .nav-item.active { border-color: var(--accent); background: rgba(88, 166, 255, 0.1); }
 
@@ -222,13 +291,22 @@ body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-main); 
     color: white;
 }
 
+#flashcard-list {
+    width: 100%;
+    display: flex;           /* Use flex to center the card */
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;      /* Prevent horizontal scrolling */
+}
+
 /* 3D Card Setup[cite: 3] */
 .card {
-    width: 350px;
-    height: 450px;
+    width: 100%;             /* Use the full width of the sidebar padding */
+    max-width: 260px;        /* Safety cap to prevent it from touching edges */
+    height: 350px;           /* Reduced height to fit typical sidebar viewports */
     perspective: 1000px;
-    cursor: pointer;
-    margin-bottom: 20px;
+    margin: 10px auto;       /* Centers it within the sidebar */
+    position: relative;      /* Keeps it in the document flow */
 }
 
 .card-inner {
@@ -240,23 +318,23 @@ body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-main); 
     transform-style: preserve-3d;
 }
 
-.card-inner.is-flipped {
-    transform: rotateY(180deg);
-}
-
+/* Ensure the front and back faces don't exceed the card's width */
 .card-front, .card-back {
     position: absolute;
+    inset: 0;                /* Short for top/bottom/left/right: 0 */
     width: 100%;
     height: 100%;
-    backface-visibility: hidden; /* Hides the reverse side[cite: 3] */
+    backface-visibility: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
-    padding: 20px;
+    padding: 15px;
+    box-sizing: border-box;  /* CRITICAL: Includes padding in the width calculation */
     border-radius: 12px;
-    background: #2a2a2a;
-    border: 1px solid #444;
+}
+
+.card-inner.is-flipped {
+    transform: rotateY(180deg);
 }
 
 .card-back {
@@ -294,3 +372,93 @@ body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-main); 
 
 .btn-fail { background: #ff4d4d; color: white; }
 .btn-pass { background: #2ecc71; color: white; }
+
+.graph-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.stat-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stat-group label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--accent-purple);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.fill {
+    height: 100%;
+    transition: width 0.5s ease-out;
+}
+
+/* Custom Colors */
+.fill.new { background: #50fa7b; }       /* Green */
+.fill.learning { background: #ffb86c; }  /* Orange */
+.fill.mastered { background: var(--accent-purple); }
+
+.stat-group span {
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.edit-hint {
+    margin-top: 10px;
+    font-size: 0.7rem;
+    opacity: 0.5;
+}
+
+/* Sidebar Specific UI */
+.mode-select {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    background: #333;
+    color: white;
+    border: 1px solid var(--border-color);
+}
+
+.start-btn {
+    width: 100%;
+    padding: 10px;
+    background: var(--accent-purple);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.sidebar-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 10px;
+    font-size: 0.8rem;
+}
+
+.study-controls {
+    display: flex;
+    gap: 5px;
+    width: 100%;
+}
+
+.btn-grade {
+    flex: 1;
+    padding: 8px 0;
+    font-size: 0.8rem;
+    cursor: pointer;
+    border-radius: 4px;
+}

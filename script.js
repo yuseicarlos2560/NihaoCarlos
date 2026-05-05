@@ -62,12 +62,21 @@ function renderVideoList() {
 
 async function loadCaptions() {
     try {
-        // Ensure this path matches your folder structure
-        const response = await fetch('captions.json');
+        // Construct the path: captions/videoId.json
+        // Note: We encodeURIComponent in case your IDs have special characters
+        const filePath = `captions/${encodeURIComponent(currentVideoId)}.json`;
+
+        const response = await fetch(filePath);
+
+        if (!response.ok) {
+            throw new Error(`Could not find caption file: ${filePath}`);
+        }
+
         const data = await response.json();
 
-        // IMPORTANT: The key in your JSON must match the ID in VIDEO_DATA exactly
-        captions = data[currentVideoId] || [];
+        // Since the file is now specific to one video,
+        // the JSON can just be the array itself
+        captions = Array.isArray(data) ? data : (data[currentVideoId] || []);
 
         if (captions.length === 0) {
             console.warn(`No transcripts found for ID: ${currentVideoId}`);
@@ -76,6 +85,9 @@ async function loadCaptions() {
         renderTranscript();
     } catch (err) {
         console.error("Error loading transcript JSON:", err);
+        // Clear transcript if file is missing to avoid showing old data
+        captions = [];
+        renderTranscript();
     }
 }
 

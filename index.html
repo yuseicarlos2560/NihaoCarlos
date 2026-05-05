@@ -27,52 +27,86 @@
       <!-- Session buttons injected here -->
     </nav>
 
-    <!-- New container for Flash Card content -->
-    <div id="flashcard-list" style="display: none; padding: 15px;">
-      <!-- Setup View: Only visible when not studying -->
-      <div id="study-setup" style="margin-bottom: 20px;">
-        <div class="mode-grid">
-          <button class="mode-opt" data-mode="random" onclick="setMode(this)">🎲<br>Random</button>
-          <button class="mode-opt" data-mode="new" onclick="setMode(this)">🆕<br>New</button>
-          <button class="mode-opt" data-mode="learning" onclick="setMode(this)">🧠<br>Learn</button>
-          <button class="mode-opt" data-mode="spaced" onclick="setMode(this)">⏳<br>Spaced</button>
-        </div>
-
-        <div class="limit-container">
-          <label for="card-limit">Cards to study:</label>
-          <input type="number" id="card-limit" value="20" min="1" max="100">
-        </div>
-
-        <button class="start-btn" onclick="StudyManager.startGlobalReview()">Start Session</button>
+    <div id="flashcard-list" style="display: none;">
+      <!-- Sub-toggle for Cards section -->
+      <div class="view-toggle">
+        <button id="btn-study-view" class="toggle-btn active" onclick="switchView('study')">Review</button>
+        <button id="btn-manage-view" class="toggle-btn" onclick="switchView('manage')">Manage</button>
       </div>
 
-      <!-- Study View: Hidden until Start is clicked -->
-      <div id="study-ui" style="display:none;">
-        <div class="sidebar-card-header">
-          <span id="card-progress">0/0</span>
-          <button onclick="StudyManager.deleteCurrentCard()" class="btn-icon">🗑️</button>
+      <div id="study-container">
+        <div id="study-setup" style="margin-bottom: 20px;">
+          <div class="mode-grid">
+            <button class="mode-opt" data-mode="random" onclick="setMode(this)">🎲<br>Random</button>
+            <button class="mode-opt" data-mode="new" onclick="setMode(this)">🆕<br>New</button>
+            <button class="mode-opt" data-mode="learning" onclick="setMode(this)">🧠<br>Learn</button>
+            <button class="mode-opt" data-mode="spaced" onclick="setMode(this)">⏳<br>Spaced</button>
+          </div>
+
+          <div class="limit-container">
+            <label for="card-limit">Cards to study:</label>
+            <input type="number" id="card-limit" value="20" min="1" max="100">
+          </div>
+
+          <button class="start-btn" onclick="StudyManager.startGlobalReview()">Start Session</button>
         </div>
 
-        <div class="card" onclick="StudyManager.flip()">
-          <div class="card-inner">
-            <div class="card-front" id="card-front-text"></div>
-            <div class="card-back">
-              <div id="card-back-text" contenteditable="true" onclick="event.stopPropagation()" onblur="StudyManager.saveEdit(this)"></div>
-              <small class="edit-hint">(Click to edit)</small>
+        <!-- Study View: Hidden until Start is clicked -->
+        <div id="study-ui" style="display:none;">
+          <div class="sidebar-card-header">
+            <span id="card-progress">0/0</span>
+            <button onclick="StudyManager.deleteCurrentCard()" class="btn-icon">🗑️</button>
+          </div>
+
+          <div class="card" onclick="StudyManager.flip()">
+            <div class="card-inner">
+              <div class="card-front" id="card-front-text"></div>
+              <div class="card-back">
+                <div id="card-back-text" contenteditable="true" onclick="event.stopPropagation()" onblur="StudyManager.saveEdit(this)"></div>
+                <small class="edit-hint">(Click to edit)</small>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="study-controls">
-          <button class="btn-grade btn-fail" onclick="StudyManager.handleGrade(false)">Again</button>
-          <button class="btn-grade btn-pass" onclick="StudyManager.handleGrade(true)">Got it</button>
-          <button class="btn-grade" onclick="StudyManager.closeView()">Exit</button>
+          <div class="study-controls">
+            <button class="btn-grade btn-fail" onclick="StudyManager.handleGrade(false)">Again</button>
+            <button class="btn-grade btn-pass" onclick="StudyManager.handleGrade(true)">Got it</button>
+            <button class="btn-grade" onclick="StudyManager.closeView()">Exit</button>
+          </div>
         </div>
+      </div>
+
+      <div id="manage-container" style="display:none;">
+        <!-- New Dictionary/Management UI -->
+        <div class="manage-header">
+          <button class="add-btn" onclick="StudyManager.addNewWord()">+ New Word</button>
+        </div>
+        <div id="vocab-list-items"></div>
       </div>
     </div>
 
     <div id="stats-view" style="display: none; padding: 20px;">
+      <div id="timeline-chart" class="timeline-chart modern-chart">
+        <!-- Dynamic bars injected here -->
+      </div>
+
       <div class="graph-container">
+        <div class="stats-controls">
+          <!-- Timeframe Selector -->
+          <div class="stat-tabs timeframe">
+            <button onclick="updateTimelineRange(7)" class="active">7D</button>
+            <button onclick="updateTimelineRange(30)">30D</button>
+            <button onclick="updateTimelineRange(90)">90D</button>
+          </div>
+
+          <!-- Metric Selector -->
+          <div class="stat-tabs metrics">
+            <button onclick="updateTimelineMetric('added')" class="active">Added</button>
+            <button onclick="updateTimelineMetric('studied')">Studied</button>
+            <button onclick="updateTimelineMetric('mastered')">Mastered</button>
+          </div>
+        </div>
+
         <div class="stat-group">
           <label>New</label>
           <div class="progress-bar"><div id="bar-new" class="fill new" style="width: 0%"></div></div>

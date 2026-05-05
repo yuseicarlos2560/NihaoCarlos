@@ -34,6 +34,9 @@ let appState = {
     lastActiveIndex: -1
 };
 
+let currentRange = 7;
+let currentMetric = 'added';
+
 // --- SPEECH MANAGER ---
 const speechManager = {
     synth: window.speechSynthesis,
@@ -447,6 +450,7 @@ const StudyManager = {
                     globalCards.push({
                         id: 'card-' + Date.now() + Math.random().toString(36).substr(2, 5),
                         front: note.title,
+                        pinyin: note.pinyin || '',
                         back: note.subNotes.join('<br>'),
                         mastery: note.mastery || 0,
                         source: sessionId,
@@ -536,6 +540,16 @@ const StudyManager = {
         }
     },
 
+    // New: Logs an individual study action for the timeline
+    logStudyEvent: function() {
+        let history = JSON.parse(localStorage.getItem('study_history')) || [];
+        history.push({
+            timestamp: Date.now(),
+            // You can also track which card was studied if needed
+        });
+        localStorage.setItem('study_history', JSON.stringify(history));
+    },
+
     /**
      * STAGE 4: INDEPENDENT DATA MANAGEMENT
      */
@@ -559,8 +573,17 @@ const StudyManager = {
             globalCards[idx].mastery = level;
             globalCards[idx].lastSeen = Date.now();
             globalCards[idx].timesSeen = (globalCards[idx].timesSeen || 0) + 1;
+
+            // NEW: Record the moment a card is mastered for the 'mastered' metric
+            if (level === 2 && !globalCards[idx].masteredAt) {
+                globalCards[idx].masteredAt = Date.now();
+            }
+
             localStorage.setItem('flashcards_master', JSON.stringify(globalCards));
-            this.updateStats(); // Refresh stats board
+
+            // Log this as a study event regardless of the grade
+            this.logStudyEvent();
+            this.updateStats();
         }
     },
 
@@ -596,6 +619,7 @@ const StudyManager = {
         document.getElementById('stat-new').innerText = cards.filter(c => c.timesSeen === 0).length;
         document.getElementById('stat-learning').innerText = cards.filter(c => c.mastery === 1).length;
         document.getElementById('stat-mastered').innerText = cards.filter(c => c.mastery === 2).length;
+        renderTimeline();
     }
 };
 
@@ -641,5 +665,153 @@ StudyManager.startGlobalReview = function() {
     this.showModal(); // This now shows the sidebar UI
     this.renderCard();
 };
+
+StudyManager.renderVocabList = function() {
+    const container = document.getElementById('vocab-list-items');
+    const cards = JSON.parse(localStorage.getItem('flashcards_master')) || [];
+
+    container.innerHTML = cards.map(card => `
+        <div class="vocab-row">
+            <input class="chinese-input" 
+                   value="${card.front}" 
+                   onblur="StudyManager.quickEdit('${card.id}', 'front', this.value)">
+            
+            <input class="back-input" 
+                   value="${card.back}" 
+                   onblur="StudyManager.quickEdit('${card.id}', 'back', this.value)">
+            
+            <div class="action-btns">
+                <button onclick="StudyManager.deleteCurrentCard('${card.id}')" class="btn-icon">✕</button>
+            </div>
+        </div>
+    `).join('');
+};
+
+StudyManager.quickEdit = function(cardId, field, value) {
+    let globalCards = JSON.parse(localStorage.getItem('flashcards_master')) || [];
+    const idx = globalCards.findIndex(c => c.id === cardId);
+    if (idx !== -1) {
+        globalCards[idx][field] = value;
+        localStorage.setItem('flashcards_master', JSON.stringify(globalCards));
+    }
+};
+
+StudyManager.addNewWord = function() {
+    // 1. Fetch current deck
+    let globalCards = JSON.parse(localStorage.getItem('flashcards_master')) || [];
+
+    // 2. Create a blank template
+    const newCard = {
+        id: 'card-' + Date.now() + Math.random().toString(36).substr(2, 5),
+        front: '', // Empty Hanzi
+        back: '',  // Empty Definition
+        mastery: 0,
+        source: 'manual_entry',
+        lastSeen: 0,
+        timesSeen: 0,
+        createdAt: Date.now() // Useful for your timeline chart later
+    };
+
+    // 3. Add to the start of the list so it appears at the top
+    globalCards.unshift(newCard);
+
+    // 4. Save back to localStorage
+    localStorage.setItem('flashcards_master', JSON.stringify(globalCards));
+
+    // 5. Re-render the list and update stats
+    this.renderVocabList();
+    this.updateStats();
+
+    // 6. Optional: Auto-focus the first input of the new row
+    setTimeout(() => {
+        const firstInput = document.querySelector('.chinese-input');
+        if (firstInput) firstInput.focus();
+    }, 0);
+};
+
+function switchView(view) {
+    const studyContainer = document.getElementById('study-container');
+    const manageContainer = document.getElementById('manage-container');
+    const btnStudy = document.getElementById('btn-study-view');
+    const btnManage = document.getElementById('btn-manage-view');
+
+    if (view === 'study') {
+        studyContainer.style.display = 'block';
+        manageContainer.style.display = 'none';
+
+        // Update button styles
+        btnStudy.classList.add('active');
+        btnManage.classList.remove('active');
+    } else {
+        studyContainer.style.display = 'none';
+        manageContainer.style.display = 'block';
+
+        // Update button styles
+        btnStudy.classList.remove('active');
+        btnManage.classList.add('active');
+
+        // Trigger the list rendering when switching to Manage mode
+        StudyManager.renderVocabList();
+    }
+}
+
+function updateTimelineRange(range) {
+    currentRange = range;
+
+    // Update Button UI
+    document.querySelectorAll('.timeframe button').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.innerText) === range);
+    });
+
+    renderTimeline();
+}
+
+function updateTimelineMetric(metric) {
+    currentMetric = metric;
+
+    // Update Button UI
+    document.querySelectorAll('.metrics button').forEach(btn => {
+        btn.classList.toggle('active', btn.innerText.toLowerCase() === metric);
+    });
+
+    renderTimeline();
+}
+
+function renderTimeline() {
+    const cards = JSON.parse(localStorage.getItem('flashcards_master')) || [];
+    const studyHistory = JSON.parse(localStorage.getItem('study_history')) || [];
+    const container = document.getElementById('timeline-chart');
+    if (!container) return;
+
+    let html = '';
+    const maxBarHeight = 80;
+
+    for (let i = currentRange - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+
+        let count = 0;
+        if (currentMetric === 'added') {
+            count = cards.filter(c => c.createdAt && new Date(c.createdAt).toDateString() === d.toDateString()).length;
+        } else if (currentMetric === 'mastered') {
+            count = cards.filter(c => c.masteredAt && new Date(c.masteredAt).toDateString() === d.toDateString()).length;
+        } else if (currentMetric === 'studied') {
+            count = studyHistory.filter(h => new Date(h.timestamp).toDateString() === d.toDateString()).length;
+        }
+
+        const heightMultiplier = currentRange === 7 ? 10 : (currentRange === 30 ? 4 : 2);
+        const height = count === 0 ? 2 : Math.min(count * heightMultiplier, maxBarHeight);
+
+        html += `
+            <div class="bar-wrapper">
+                <!-- Custom Tooltip -->
+                <div class="bar-tooltip">${count} words<br><small>${dStr}</small></div>
+                <div class="bar-fill ${currentMetric}" style="height: ${height}px"></div>
+            </div>
+        `;
+    }
+    container.innerHTML = html;
+}
 
 init();

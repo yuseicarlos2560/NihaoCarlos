@@ -515,3 +515,212 @@ body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-main); 
     text-align: center;
 }
 
+.vocab-row {
+    display: flex;
+    flex-direction: column; /* Stack vertically for better readability in 300px */
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.vocab-row input {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 0.9rem;
+    padding: 2px 0;
+}
+
+.vocab-row .chinese-input:focus,
+.vocab-row .back-input:focus {
+    outline: none;
+    border-bottom: 1px solid var(--accent-purple);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.vocab-row .chinese-input { font-size: 1.1rem; color: var(--accent-purple); font-weight: bold; }
+.vocab-row .pinyin-input { font-size: 0.8rem; color: #888; }
+.vocab-row .action-btns { align-self: flex-end; margin-top: -20px; }
+
+.view-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.toggle-btn {
+    flex: 1;
+    padding: 6px;
+    background: transparent;
+    border: none;
+    color: var(--accent-purple);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.toggle-btn.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-weight: bold;
+}
+
+.add-btn {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    color: var(--accent-purple);
+    border: 1px dashed var(--accent-purple); /* Dashed suggests "filling a slot" */
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.add-btn:hover {
+    background: rgba(160, 100, 255, 0.1);
+    border-style: solid;
+    transform: translateY(-1px);
+}
+
+.add-btn:active {
+    transform: translateY(0);
+}
+
+.btn-icon {
+    background: transparent;
+    border: none;
+    color: var(--accent); /* Start subtle */
+    padding: 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0.6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Red glow effect only on hover to prevent accidental deletions */
+.btn-icon:hover {
+    color: #ff5555;
+    background: rgba(255, 85, 85, 0.1);
+    opacity: 1;
+}
+
+/* Style for the trash/X icon specifically */
+.btn-icon svg, .btn-icon i {
+    width: 14px;
+    height: 14px;
+}
+
+
+.stats-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.stat-tabs {
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    padding: 2px;
+}
+
+.stat-tabs button {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--accent);
+    font-size: 0.7rem;
+    padding: 4px 0;
+    cursor: pointer;
+}
+
+.stat-tabs button.active {
+    background: var(--accent-purple);
+    color: white;
+    border-radius: 3px;
+}
+
+.timeline-chart {
+    display: flex;
+    align-items: flex-end;
+    height: 100px;
+    gap: 1px; /* Minimal gap for 90-day view */
+    border-bottom: 1px solid var(--border-color);
+}
+
+.bar-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    height: 100%;
+    position: relative; /* Anchor for the tooltip */
+}
+
+.bar-tooltip {
+    position: absolute;
+    bottom: 110%; /* Position above the bar */
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2a2a2a;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    pointer-events: none; /* Don't block mouse interactions */
+    opacity: 0;
+    transition: opacity 0.2s, bottom 0.2s;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    z-index: 10;
+    text-align: center;
+}
+
+/* Tip arrow */
+.bar-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #2a2a2a transparent transparent transparent;
+}
+
+/* Show on hover */
+.bar-wrapper:hover .bar-tooltip {
+    opacity: 1;
+    bottom: 120%;
+}
+
+.bar-wrapper:hover .bar-fill {
+    filter: brightness(1.2);
+    box-shadow: 0 0 8px var(--accent-purple);
+}
+
+.bar-fill {
+    width: 100%;
+    border-radius: 1px 1px 0 0;
+    transition: height 0.3s ease, background 0.3s ease;
+}
+
+/* Color Coding by Metric */
+.bar-fill.added { background: #ff5555; }
+.bar-fill.studied { background: #ff5555; }
+.bar-fill.mastered { background: #ff5555; }

@@ -462,3 +462,56 @@ body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-main); 
     cursor: pointer;
     border-radius: 4px;
 }
+
+.mode-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.mode-opt {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px 5px;
+    color: white;
+    cursor: pointer;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    transition: all 0.2s ease;
+}
+
+.mode-opt:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.mode-opt.active {
+    background: var(--accent-purple);
+    border-color: var(--accent-purple);
+    box-shadow: 0 0 10px rgba(160, 100, 255, 0.3);
+}
+
+.limit-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 0 5px;
+}
+
+.limit-container label {
+    font-size: 0.8rem;
+    color: var(--accent-purple);
+}
+
+#card-limit {
+    width: 60px;
+    background: #1a1a1a;
+    border: 1px solid var(--border-color);
+    color: white;
+    padding: 4px;
+    border-radius: 4px;
+    text-align: center;
+}
+

@@ -31,13 +31,19 @@
     <div id="flashcard-list" style="display: none; padding: 15px;">
       <!-- Setup View: Only visible when not studying -->
       <div id="study-setup" style="margin-bottom: 20px;">
-        <select id="review-mode-select" class="mode-select">
-          <option value="random">Random Mode</option>
-          <option value="new">New Cards</option>
-          <option value="learning">Learning</option>
-          <option value="spaced">Spaced Repetition</option>
-        </select>
-        <button class="start-btn" onclick="StudyManager.startGlobalReview()">Start Review</button>
+        <div class="mode-grid">
+          <button class="mode-opt" data-mode="random" onclick="setMode(this)">🎲<br>Random</button>
+          <button class="mode-opt" data-mode="new" onclick="setMode(this)">🆕<br>New</button>
+          <button class="mode-opt" data-mode="learning" onclick="setMode(this)">🧠<br>Learn</button>
+          <button class="mode-opt" data-mode="spaced" onclick="setMode(this)">⏳<br>Spaced</button>
+        </div>
+
+        <div class="limit-container">
+          <label for="card-limit">Cards to study:</label>
+          <input type="number" id="card-limit" value="20" min="1" max="100">
+        </div>
+
+        <button class="start-btn" onclick="StudyManager.startGlobalReview()">Start Session</button>
       </div>
 
       <!-- Study View: Hidden until Start is clicked -->

@@ -599,4 +599,47 @@ const StudyManager = {
     }
 };
 
+// Global variable to keep track of selected mode
+let selectedReviewMode = 'random';
+
+function setMode(btn) {
+    // 1. Update UI
+    document.querySelectorAll('.mode-opt').forEach(opt => opt.classList.remove('active'));
+    btn.classList.add('active');
+
+    // 2. Set the mode
+    selectedReviewMode = btn.getAttribute('data-mode');
+}
+
+// Update StudyManager.startGlobalReview to use the limit
+StudyManager.startGlobalReview = function() {
+    this.syncToGlobal();
+    const globalCards = JSON.parse(localStorage.getItem('flashcards_master')) || [];
+    const limit = parseInt(document.getElementById('card-limit').value) || 20;
+    const now = Date.now();
+    const threeDays = 3 * 24 * 60 * 60 * 1000;
+
+    let filteredDeck = [];
+
+    // Use the global variable selectedReviewMode instead of the dropdown
+    switch(selectedReviewMode) {
+        case 'learning': filteredDeck = globalCards.filter(c => c.mastery === 1); break;
+        case 'new': filteredDeck = globalCards.filter(c => c.timesSeen === 0); break;
+        case 'spaced': filteredDeck = globalCards.filter(c => (now - (c.lastSeen || 0)) > threeDays); break;
+        default: filteredDeck = [...globalCards];
+    }
+
+    if (filteredDeck.length === 0) {
+        alert(`No cards found for ${selectedReviewMode} mode!`);
+        return;
+    }
+
+    // Shuffle and then APPLY THE LIMIT
+    this.deck = filteredDeck.sort(() => Math.random() - 0.5).slice(0, limit);
+
+    this.currentIndex = 0;
+    this.showModal(); // This now shows the sidebar UI
+    this.renderCard();
+};
+
 init();

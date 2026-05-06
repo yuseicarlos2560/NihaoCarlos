@@ -19,13 +19,14 @@ const VIDEO_DATA = {
     'tHv-FSgtcnc': { title: '有点在李：Palantir', category: 'Tech' },
     'uzx5xWNOSws': { title: '有点在李：Claude', category: 'Tech' },
     '8eAJ9PDgUyI': { title: '有点在李：Fight for AI Hegemony', category: 'Tech' },
+    'Nn63Fb1olRA': { title: '王志安: China Eastern Crash', category: 'Aviation' },
     'bili:BV1LYoGBBEsF': { title: 'Self-care: Why do we feel we are not enough', category: 'General' },
     '__Borrador_UNAM_en_Chino': { title: 'Historia de la UNAM', category: 'General' },
     'documents/HSK41002.pdf': { title: 'HSK4 test 2', category: 'HSK' }
 };
 
 let appState = {
-    currentVideoId: '1fqsNZ9HGU8',
+    currentVideoId: 'tPtHJ2FvtdM',
     currentCategory: 'All',
     isPinyinVisible: true,
     isSidebarCollapsed: false,
@@ -71,7 +72,7 @@ function renderVideoList() {
 
     // 2. Build the HTML with <details> for each category
     list.innerHTML = Object.entries(groupedData).map(([category, videos]) => `
-        <details class="category-section" open>
+        <details class="category-section">
             <summary class="category-header">${category}</summary>
             <div class="category-content">
                 ${videos.map(video => `
@@ -129,7 +130,7 @@ function renderTranscript() {
 
         return `
             <div class="caption-line" id="cap-${i}" 
-                 onclick="${useTTS ? `speechManager.speak('${cleanText}')` : `player.seekTo(${cap.start})`}">
+                 onclick="${useTTS ? `speechManager.speak('${cleanText}')` : `appState.player.seekTo(${cap.start})`}">
                 <div class="caption-text-group">
                     <span class="timestamp">${formatTime(cap.start)}</span>
                     <span class="text-content">${cap.text}</span>
@@ -388,19 +389,17 @@ function switchMode(mode) {
 }
 
 function updateStatsGraphs() {
-    // Example logic: calculate percentages based on a total
-    // Replace these with your actual data variables
-    const data = {
-        new: parseInt(document.getElementById('stat-new').innerText) || 5,
-        learning: parseInt(document.getElementById('stat-learning').innerText) || 12,
-        mastered: parseInt(document.getElementById('stat-mastered').innerText) || 25
-    };
+    StudyManager.updateStats();
 
-    const total = data.new + data.learning + data.mastered || 1;
+    const newWords = parseInt(document.getElementById('stat-new').innerText);
+    const learnWords = parseInt(document.getElementById('stat-learning').innerText);
+    const masteredWords = parseInt(document.getElementById('stat-mastered').innerText);
 
-    document.getElementById('bar-new').style.width = `${(data.new / total) * 100}%`;
-    document.getElementById('bar-learning').style.width = `${(data.learning / total) * 100}%`;
-    document.getElementById('bar-mastered').style.width = `${(data.mastered / total) * 100}%`;
+    const total = newWords + learnWords + masteredWords;
+
+    document.getElementById('bar-new').style.width = `${(newWords / total) * 100}%`;
+    document.getElementById('bar-learning').style.width = `${(learnWords / total) * 100}%`;
+    document.getElementById('bar-mastered').style.width = `${(masteredWords / total) * 100}%`;
 }
 
 function filterSessions() {

@@ -163,7 +163,7 @@ body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-main); 
 .notes-section { padding: 40px; max-width: 1200px; margin: 0 auto; width: 100%; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .parent-bar { background: var(--bg-sidebar); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-.parent-input { font-size: 3.0rem; font-weight: 800; background: transparent; border: none; color: white; width: 100%; outline: none; }
+.parent-input { font-size: 2.0rem; font-weight: 800; background: transparent; border: none; color: white; width: 100%; outline: none; }
 
 .pinyin-display { color: var(--accent); font-size: 0.9rem; margin-top: 4px; font-weight: 400; }
 
@@ -180,7 +180,7 @@ body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-main); 
 }
 
 .child-input {
-    font-size: 3.1rem;
+    font-size: 2.1rem;
     background: transparent;
     border: none;
     color: var(--text-main);

@@ -22,6 +22,7 @@ const VIDEO_DATA = {
     'Nn63Fb1olRA': { title: '王志安: China Eastern Crash', category: 'Aviation' },
     'bili:BV1LYoGBBEsF': { title: 'Self-care: Why do we feel we are not enough', category: 'General' },
     '__Borrador_UNAM_en_Chino': { title: 'Historia de la UNAM', category: 'General' },
+    '__script_dev-econ-paper-2': { title: '发展经济第二篇论文', category: 'School' },
     'documents/HSK41002.pdf': { title: 'HSK4 test 2', category: 'HSK' }
 };
 
@@ -782,34 +783,78 @@ function renderTimeline() {
     const container = document.getElementById('timeline-chart');
     if (!container) return;
 
-    let html = '';
     const maxBarHeight = 80;
+
+    // First collect all counts
+    const data = [];
 
     for (let i = currentRange - 1; i >= 0; i--) {
         const d = new Date();
         d.setDate(d.getDate() - i);
-        const dStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+
+        const dStr = d.toLocaleDateString(undefined, {
+            month: 'short',
+            day: 'numeric'
+        });
 
         let count = 0;
+
         if (currentMetric === 'added') {
-            count = cards.filter(c => c.createdAt && new Date(c.createdAt).toDateString() === d.toDateString()).length;
+            count = cards.filter(
+                c =>
+                    c.createdAt &&
+                    new Date(c.createdAt).toDateString() === d.toDateString()
+            ).length;
         } else if (currentMetric === 'mastered') {
-            count = cards.filter(c => c.masteredAt && new Date(c.masteredAt).toDateString() === d.toDateString()).length;
+            count = cards.filter(
+                c =>
+                    c.masteredAt &&
+                    new Date(c.masteredAt).toDateString() === d.toDateString()
+            ).length;
         } else if (currentMetric === 'studied') {
-            count = studyHistory.filter(h => new Date(h.timestamp).toDateString() === d.toDateString()).length;
+            count = studyHistory.filter(
+                h =>
+                    new Date(h.timestamp).toDateString() === d.toDateString()
+            ).length;
         }
 
-        const heightMultiplier = currentRange === 7 ? 10 : (currentRange === 30 ? 4 : 2);
-        const height = count === 0 ? 2 : Math.min(count * heightMultiplier, maxBarHeight);
+        data.push({
+            count,
+            dStr
+        });
+    }
+
+    // Find maximum non-zero value
+    const maxCount = Math.max(...data.map(item => item.count));
+
+    let html = '';
+
+    data.forEach(item => {
+        let height = 0;
+
+        // If everything is 0 -> all bars height 0
+        if (maxCount === 0) {
+            height = 0;
+        } else {
+            // Scale proportionally so max value becomes 80px
+            height = (item.count / maxCount) * maxBarHeight;
+        }
 
         html += `
             <div class="bar-wrapper">
-                <!-- Custom Tooltip -->
-                <div class="bar-tooltip">${count} words<br><small>${dStr}</small></div>
-                <div class="bar-fill ${currentMetric}" style="height: ${height}px"></div>
+                <div class="bar-tooltip">
+                    ${item.count} words<br>
+                    <small>${item.dStr}</small>
+                </div>
+
+                <div 
+                    class="bar-fill ${currentMetric}" 
+                    style="height: ${height}px">
+                </div>
             </div>
         `;
-    }
+    });
+
     container.innerHTML = html;
 }
 

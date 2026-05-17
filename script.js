@@ -427,7 +427,7 @@ function filterSessions() {
 }
 
 const StudyManager = {
-    deck: [],
+    flashCardsTempDeck: [],
     currentIndex: 0,
 
     /**
@@ -500,7 +500,7 @@ const StudyManager = {
             return;
         }
 
-        this.deck = filteredDeck.sort(() => Math.random() - 0.5);
+        this.flashCardsTempDeck = filteredDeck.sort(() => Math.random() - 0.5);
         this.currentIndex = 0;
         this.showModal();
         this.renderCard();
@@ -510,7 +510,7 @@ const StudyManager = {
      * STAGE 3: UI RENDERING & INTERACTION
      */
     renderCard: function() {
-        const card = this.deck[this.currentIndex];
+        const card = this.flashCardsTempDeck[this.currentIndex];
         const cardInner = document.querySelector('.card-inner');
 
         // Reset flip state for new card
@@ -520,7 +520,7 @@ const StudyManager = {
         document.getElementById('card-front-text').innerText = card.front;
         document.getElementById('card-back-text').innerHTML = card.back;
         document.getElementById('card-progress').innerText =
-            `Reviewing: ${this.currentIndex + 1} / ${this.deck.length}`;
+            `Reviewing: ${this.currentIndex + 1} / ${this.flashCardsTempDeck.length}`;
     },
 
     flip: function() {
@@ -528,11 +528,11 @@ const StudyManager = {
     },
 
     handleGrade: function(isMastered) {
-        const card = this.deck[this.currentIndex];
+        const card = this.flashCardsTempDeck[this.currentIndex];
         this.updateGlobalMastery(card.id, isMastered ? 2 : 1);
 
         this.currentIndex++;
-        if (this.currentIndex < this.deck.length) {
+        if (this.currentIndex < this.flashCardsTempDeck.length) {
             this.renderCard();
         } else {
             alert("Review complete!");
@@ -554,15 +554,15 @@ const StudyManager = {
      * STAGE 4: INDEPENDENT DATA MANAGEMENT
      */
     saveEdit: function(element) {
-        const cardId = this.deck[this.currentIndex].id;
+        const cardId = this.flashCardsTempDeck[this.currentIndex].id;
         let globalCards = JSON.parse(localStorage.getItem('flashcards_master')) || [];
 
         const cardIndex = globalCards.findIndex(c => c.id === cardId);
         if (cardIndex !== -1) {
             globalCards[cardIndex].back = element.innerHTML;
             localStorage.setItem('flashcards_master', JSON.stringify(globalCards));
-            // Update current deck reference too
-            this.deck[this.currentIndex].back = element.innerHTML;
+            // Update current flashCardsTempDeck reference too
+            this.flashCardsTempDeck[this.currentIndex].back = element.innerHTML;
         }
     },
 
@@ -589,13 +589,13 @@ const StudyManager = {
 
     deleteCurrentCard: function() {
         if (!confirm("Delete permanently?")) return;
-        const cardId = this.deck[this.currentIndex].id;
+        const cardId = this.flashCardsTempDeck[this.currentIndex].id;
         let globalCards = JSON.parse(localStorage.getItem('flashcards_master')) || [];
         globalCards = globalCards.filter(c => c.id !== cardId);
         localStorage.setItem('flashcards_master', JSON.stringify(globalCards));
-        this.deck.splice(this.currentIndex, 1);
+        this.flashCardsTempDeck.splice(this.currentIndex, 1);
 
-        if (this.currentIndex >= this.deck.length) {
+        if (this.currentIndex >= this.flashCardsTempDeck.length) {
             this.closeView();
         } else {
             this.renderCard();
@@ -659,7 +659,7 @@ StudyManager.startGlobalReview = function() {
     }
 
     // Shuffle and then APPLY THE LIMIT
-    this.deck = filteredDeck.sort(() => Math.random() - 0.5).slice(0, limit);
+    this.flashCardsTempDeck = filteredDeck.sort(() => Math.random() - 0.5).slice(0, limit);
 
     this.currentIndex = 0;
     this.showModal(); // This now shows the sidebar UI
@@ -681,7 +681,7 @@ StudyManager.renderVocabList = function() {
                    onblur="StudyManager.quickEdit('${card.id}', 'back', this.value)">
             
             <div class="action-btns">
-                <button onclick="StudyManager.deleteCurrentCard('${card.id}')" class="btn-icon">✕</button>
+                <button onclick="StudyManager.deleteCardPermanently('${card.id}')" class="btn-icon">✕</button>
             </div>
         </div>
     `).join('');
@@ -694,6 +694,22 @@ StudyManager.quickEdit = function(cardId, field, value) {
         globalCards[idx][field] = value;
         localStorage.setItem('flashcards_master', JSON.stringify(globalCards));
     }
+};
+
+StudyManager.deleteCardPermanently = function(cardId) {
+    if (!confirm("Delete permanently?")) return;
+    let globalCards = JSON.parse(localStorage.getItem('flashcards_master')) || [];
+
+    const initialLength = globalCards.length;
+    globalCards = globalCards.filter(card => card.id !== cardId);
+
+    if (globalCards.length < initialLength) {
+        localStorage.setItem('flashcards_master', JSON.stringify(globalCards));
+        this.renderVocabList();
+        return true;
+    }
+
+    return false;
 };
 
 StudyManager.addNewWord = function() {

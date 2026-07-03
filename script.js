@@ -1,31 +1,3 @@
-// --- CONFIG & STATE ---
-// --- ZONE 1: CONFIG & STATE ---
-const VIDEO_DATA = {
-    '1fqsNZ9HGU8': { title: '小lin说：RMB tendency', category: 'Economics' },
-    'Q73s8v_d46M': { title: '小lin说：Exchange rate going up', category: 'Economics' },
-    'Lb60mjM5B1U': { title: '小lin说：Recap of last 6 years', category: 'Economics' },
-    'HeVuAKDtWX8': { title: '小lin说：Iran war', category: 'Economics' },
-    'vP45wBOQLS8': { title: '小lin说：SVB bank', category: 'Economics' },
-    'hhtMlRZLJ0g': { title: '小lin说：Sports Betting', category: 'Economics' },
-    'ERK34RQq9YU': { title: '小lin说：Ads', category: 'Economics' },
-    'Euc0HS-0XUs': { title: '小lin说：Marketing Tactics', category: 'Economics' },
-    'AJLe1AEgz5M': { title: '小lin说：Vietnam Fraud', category: 'Economics' },
-    'ssssR1hxiTw': { title: '小lin说：Middle East Oil', category: 'Economics' },
-    'yP3lKQF-nb4': { title: '小lin说：Economics of Museums', category: 'Economics' },
-    'zsOYK-sb3Qo': { title: '二爷故事：Xi and Bo Xilai', category: 'Politics' },
-    'aWrqBWs_HJ8': { title: '大问题dialectic：Chinese vs Western Philosophy', category: 'Philosophy' },
-    'bQ-tobjv92k': { title: '有点在李：Concerts prices', category: 'Tech' },
-    'tPtHJ2FvtdM': { title: '有点在李：SpaceX IPO', category: 'Tech' },
-    'tHv-FSgtcnc': { title: '有点在李：Palantir', category: 'Tech' },
-    'uzx5xWNOSws': { title: '有点在李：Claude', category: 'Tech' },
-    '8eAJ9PDgUyI': { title: '有点在李：Fight for AI Hegemony', category: 'Tech' },
-    'Nn63Fb1olRA': { title: '王志安: China Eastern Crash', category: 'Aviation' },
-    'bili:BV1LYoGBBEsF': { title: 'Self-care: Why do we feel we are not enough', category: 'General' },
-    '__Borrador_UNAM_en_Chino': { title: 'Historia de la UNAM', category: 'General' },
-    '__script_dev-econ-paper-2': { title: '发展经济第二篇论文', category: 'School' },
-    'documents/HSK41002.pdf': { title: 'HSK4 test 2', category: 'HSK' }
-};
-
 let appState = {
     currentVideoId: 'tPtHJ2FvtdM',
     currentCategory: 'All',
@@ -61,11 +33,21 @@ async function init() {
     loadNotes();
 }
 
-function renderVideoList() {
+async function renderVideoList() {
+    const filePath = `data/sessions/sessions.json`;
+
+    const response = await fetch(filePath);
+
+    if (!response.ok) {
+        throw new Error(`Could not find caption file: ${filePath}`);
+    }
+
+    const sessions_data = await response.json();
+
     const list = document.getElementById('video-list');
 
     // 1. Group data by category
-    const groupedData = Object.entries(VIDEO_DATA).reduce((acc, [id, info]) => {
+    const groupedData = Object.entries(sessions_data).reduce((acc, [id, info]) => {
         if (!acc[info.category]) acc[info.category] = [];
         acc[info.category].push({ id, ...info });
         return acc;
@@ -91,7 +73,7 @@ async function loadCaptions() {
     try {
         // Construct the path: captions/videoId.json
         // Note: We encodeURIComponent in case your IDs have special characters
-        const filePath = `captions/${encodeURIComponent(appState.currentVideoId)}.json`;
+        const filePath = `data/captions/${encodeURIComponent(appState.currentVideoId)}.json`;
 
         const response = await fetch(filePath);
 
